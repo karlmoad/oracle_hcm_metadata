@@ -155,7 +155,7 @@ def process(root):
     section = ''
     for tag in article.children:
         if tag.name == 'h2':
-            if tag.text[0] != '1':
+            if tag.text != '1 Overview':
                 section = tag.text[tag.text.index(' '):].strip()
                 in_section = True
 
