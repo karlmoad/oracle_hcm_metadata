@@ -104,26 +104,37 @@ def process_document(section, uri, output):
     sections = e_body.find_all('section', {'class': 'section'})
     if len(sections) > 0:
         details = sections[0]
-        tpe = details.find('ul').find_all("li")[2].find('p').text
-        tpe = tpe[tpe.index(':')+1:].strip()
-        data["type"] = tpe
+        attr = details.find('ul').find_all("li")
+        if len(attr) >= 3:
+            details = sections[0]
+            tpe = attr[2].find('p').text
+            tpe = tpe[tpe.index(':') + 1:].strip()
+            data["type"] = tpe
 
-        if tpe == 'TABLE':
-            cols = extract_table_columns(sections[2])
-            if cols is not None and len(cols) > 0:
-                data['columns'] = cols
-            else:
-                data["error"] = "Error extracting columns from ({}) uri: {}".format(section, uri)
-                return
+            schema = attr[0].find('p').text
+            data['schema'] = schema[schema.index(':')+1:].strip()
 
-        if tpe == 'VIEW':
-            vsql = extract_view_sql(sections[3])
-            if vsql is not None and len(vsql) > 0:
-                data["query"] = vsql
-            else:
-                data["error"] = "Error extracting view info from ({}) uri: {}".format(section, uri)
-                return
+            owner = attr[1].find('p').text
+            data['owner'] = owner[owner.index(':')+1:].strip()
 
+            if tpe == 'TABLE':
+                cols = extract_table_columns(sections[2])
+                if cols is not None and len(cols) > 0:
+                    data['columns'] = cols
+                else:
+                    data["error"] = "Error extracting columns from ({}) uri: {}".format(section, uri)
+                    return
+
+            if tpe == 'VIEW':
+                vsql = extract_view_sql(sections[3])
+                if vsql is not None and len(vsql) > 0:
+                    data["query"] = vsql
+                else:
+                    data["error"] = "Error extracting view info from ({}) uri: {}".format(section, uri)
+                    return
+        else:
+            data['error'] = "Invalid object attribute info structure from [{}] uri:{}".format(section, uri)
+            return
     else:
         data["error"] = "Error: Unable to extract body section elements from [{}] uri: {}".format(section, uri)
         return
