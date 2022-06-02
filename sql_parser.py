@@ -48,8 +48,6 @@ AbsenceAgreementDEO.EFFECTIVE_END_DATE = AbsenceAgreementTranslationDEO.EFFECTIV
 sql2 = 'select a.field1 b.field2 from tablea a, tableb b where a.cat> 1 and b.type!=5'
 
 t = Tokenizer(sql)
-t.tokenize()
-
-print(t.tokens)
+print(t.analyze())
 
 

@@ -1,6 +1,7 @@
 from parse.common import EnumBase
 from enum import auto
 
+
 class TokenType(EnumBase):
     UNKNOWN = auto()
     DATATYPE = auto()
@@ -27,12 +28,16 @@ class TokenType(EnumBase):
     HAVING = auto()
     JOIN = auto()
     CONSTRAINT = auto()
-
+    INSERT = auto()
+    UPDATE = auto()
+    DELETE = auto()
+    AS = auto()
 
 class Token:
     def __init__(self, label: str = '', ttype: TokenType = TokenType.UNKNOWN):
         self._type = ttype
         self._label = label
+        self._subitems = []
 
     def get_type(self) -> TokenType:
         return self._type
@@ -43,15 +48,31 @@ class Token:
     def get_label(self) -> str:
         return self._label
 
+    def add_sub_item(self, token):
+        self._subitems.append(token)
+
+    def get_sub_items(self):
+        return self._subitems
+
     token_type = property(get_type, set_type)
     label = property(get_label, None)
+    sub_items = property(get_sub_items,None)
 
     def __repr__(self):
-        return "TOKEN(): ( LABEL: [{}], TYPE: {} )".format(self._label, self._type)
+        return self._to_string()
 
     def __str__(self):
-        return "LABEL: [{}], TYPE: {}".format(self._label, self._type)
+        return self._to_string()
 
+    def _to_string(self):
+        base = "( LABEL: [{}], TYPE: {} ".format(self._label, self._type)
+        if len(self._subitems) > 0:
+            base = base + " SUB ITEMS: ("
+            for item in self._subitems:
+                base = base + "\n\t" + item._to_string() + ","
+            base = base + "\n)"
+        base = base + ")"
+        return base
 
 class Tokenizer:
     def __init__(self, statement):
@@ -107,7 +128,7 @@ class Tokenizer:
         "ALTER": TokenType.KEYWORD,
         "AND": TokenType.KEYWORD,
         "ASC": TokenType.KEYWORD,
-        "AS": TokenType.KEYWORD,
+        "AS": TokenType.AS,
         "AUTO_INCREMENT": TokenType.KEYWORD,
         "BEGIN": TokenType.KEYWORD,
         "BETWEEN": TokenType.OPERATOR,
@@ -256,11 +277,37 @@ class Tokenizer:
         "\rn": TokenType.WHITESPACE,
     }
 
-    def tokenize(self):
+    _QUERY_STRUCTURE = {
+        TokenType.SELECT,
+        TokenType.FROM,
+        TokenType.WHERE,
+        TokenType.GROUP_BY,
+        TokenType.ORDER_BY,
+        TokenType.HAVING
+    }
+
+    def analyze(self):
         self._white_space_pass()
         self._operator_pass()
         self._condense_operators_pass()
         self._ttype_classification_pass()
+        #self._syntax_alignment_pass()
+
+        return self._tokens
+
+    def _syntax_alignment_pass(self):
+        working = []
+        cur = None
+        for token in self._tokens:
+            if token.token_type in self._QUERY_STRUCTURE:
+                if cur is not None:
+                    working.append(cur)
+                cur = token
+            else:
+                if cur is not None:
+                    cur.add_sub_item(token)
+
+        self._tokens = working
 
     def _ttype_classification_pass(self):
         working = []
@@ -290,7 +337,6 @@ class Tokenizer:
                             continue
                     else:
                         working.append(self._tokens[pos])
-
                 else:
                     working.append(self._tokens[pos])
                 pos = pos + 1
