@@ -1,9 +1,9 @@
 from parse.common import EnumBase
 from enum import auto
 
-
 class TokenType(EnumBase):
     UNKNOWN = auto()
+    DATATYPE = auto()
     KEYWORD = auto()
     OBJECT = auto()
     OPERATOR = auto()
@@ -11,6 +11,7 @@ class TokenType(EnumBase):
     COMMENT = auto()
     COMMAND = auto()
     VALUE = auto()
+    NAME = auto()
     SEPARATOR = auto()
     GROUPING = auto()
     LITERAL = auto()
@@ -18,6 +19,14 @@ class TokenType(EnumBase):
     WHITESPACE = auto()
     SYNONYM = auto()
     PARAMETER = auto()
+    SELECT = auto()
+    FROM = auto()
+    WHERE = auto()
+    GROUP_BY = auto()
+    ORDER_BY = auto()
+    HAVING = auto()
+    JOIN = auto()
+    CONSTRAINT = auto()
 
 
 class Token:
@@ -38,7 +47,7 @@ class Token:
     label = property(get_label, None)
 
     def __repr__(self):
-        return "TOKEN(): | LABEL: [{}], TYPE: {} |".format(self._label, self._type)
+        return "TOKEN(): ( LABEL: [{}], TYPE: {} )".format(self._label, self._type)
 
     def __str__(self):
         return "LABEL: [{}], TYPE: {}".format(self._label, self._type)
@@ -66,7 +75,7 @@ class Tokenizer:
         "&": TokenType.OPERATOR,
         "^": TokenType.OPERATOR,
         ":": TokenType.OPERATOR,
-        ".": TokenType.OPERATOR,
+        ".": TokenType.SEPARATOR,
         "-": TokenType.OPERATOR,
         "=": TokenType.OPERATOR,
         ">": TokenType.OPERATOR,
@@ -118,7 +127,7 @@ class Tokenizer:
         "DEFAULT": TokenType.KEYWORD,
         "DELETE": TokenType.KEYWORD,
         "DESC": TokenType.KEYWORD,
-        "DISTINCT": TokenType.KEYWORD,
+        "DISTINCT": TokenType.CONSTRAINT,
         "DROP": TokenType.KEYWORD,
         "ELSE": TokenType.KEYWORD,
         "END": TokenType.KEYWORD,
@@ -133,9 +142,9 @@ class Tokenizer:
         "FULL": TokenType.KEYWORD,
         "FUNCTION": TokenType.KEYWORD,
         "FOLLOWING": TokenType.KEYWORD,
-        "FROM": TokenType.KEYWORD,
-        "GROUP": TokenType.KEYWORD,
-        "HAVING": TokenType.KEYWORD,
+        "FROM": TokenType.FROM,
+        "GROUP": TokenType.GROUP_BY,
+        "HAVING": TokenType.HAVING,
         "IF": TokenType.KEYWORD,
         "ILIKE": TokenType.KEYWORD,
         "IN": TokenType.KEYWORD,
@@ -145,7 +154,7 @@ class Tokenizer:
         "INTERSECT": TokenType.KEYWORD,
         "INTO": TokenType.KEYWORD,
         "IS": TokenType.KEYWORD,
-        "JOIN": TokenType.KEYWORD,
+        "JOIN": TokenType.JOIN,
         "LATERAL": TokenType.KEYWORD,
         "LAZY": TokenType.KEYWORD,
         "LEFT": TokenType.KEYWORD,
@@ -158,7 +167,7 @@ class Tokenizer:
         "OPTIMIZE": TokenType.KEYWORD,
         "OPTIONS": TokenType.KEYWORD,
         "OR": TokenType.KEYWORD,
-        "ORDER": TokenType.KEYWORD,
+        "ORDER": TokenType.ORDER_BY,
         "ORDINALITY": TokenType.KEYWORD,
         "OUTER": TokenType.KEYWORD,
         "OVER": TokenType.KEYWORD,
@@ -176,7 +185,7 @@ class Tokenizer:
         "RIGHT": TokenType.KEYWORD,
         "RLIKE": TokenType.KEYWORD,
         "ROWS": TokenType.KEYWORD,
-        "SELECT": TokenType.KEYWORD,
+        "SELECT": TokenType.SELECT,
         "SET": TokenType.KEYWORD,
         "SHOW": TokenType.KEYWORD,
         "STORED": TokenType.KEYWORD,
@@ -198,45 +207,45 @@ class Tokenizer:
         "VALUES": TokenType.KEYWORD,
         "VIEW": TokenType.KEYWORD,
         "WHEN": TokenType.KEYWORD,
-        "WHERE": TokenType.KEYWORD,
+        "WHERE": TokenType.WHERE,
         "WITH": TokenType.KEYWORD,
         "WITHOUT": TokenType.KEYWORD,
         "ZONE": TokenType.KEYWORD,
-        "ARRAY": TokenType.KEYWORD,
-        "BOOL": TokenType.KEYWORD,
-        "BOOLEAN": TokenType.KEYWORD,
-        "BYTE": TokenType.KEYWORD,
-        "TINYINT": TokenType.KEYWORD,
-        "SHORT": TokenType.KEYWORD,
-        "SMALLINT": TokenType.KEYWORD,
-        "INT2": TokenType.KEYWORD,
-        "INTEGER": TokenType.KEYWORD,
-        "INT": TokenType.KEYWORD,
-        "INT4": TokenType.KEYWORD,
-        "LONG": TokenType.KEYWORD,
-        "BIGINT": TokenType.KEYWORD,
-        "INT8": TokenType.KEYWORD,
-        "DECIMAL": TokenType.KEYWORD,
-        "MAP": TokenType.KEYWORD,
-        "NUMBER": TokenType.KEYWORD,
-        "NUMERIC": TokenType.KEYWORD,
-        "FIXED": TokenType.KEYWORD,
-        "REAL": TokenType.KEYWORD,
-        "FLOAT": TokenType.KEYWORD,
-        "FLOAT4": TokenType.KEYWORD,
-        "FLOAT8": TokenType.KEYWORD,
-        "DOUBLE": TokenType.KEYWORD,
-        "JSON": TokenType.KEYWORD,
-        "CHAR": TokenType.KEYWORD,
-        "VARCHAR": TokenType.KEYWORD,
-        "STRING": TokenType.KEYWORD,
-        "TEXT": TokenType.KEYWORD,
-        "BINARY": TokenType.KEYWORD,
-        "BYTEA": TokenType.KEYWORD,
-        "TIMESTAMP": TokenType.KEYWORD,
-        "TIMESTAMPTZ": TokenType.KEYWORD,
-        "DATE": TokenType.KEYWORD,
-        "UUID": TokenType.KEYWORD,
+        "ARRAY": TokenType.DATATYPE,
+        "BOOL": TokenType.DATATYPE,
+        "BOOLEAN": TokenType.DATATYPE,
+        "BYTE": TokenType.DATATYPE,
+        "TINYINT": TokenType.DATATYPE,
+        "SHORT": TokenType.DATATYPE,
+        "SMALLINT": TokenType.DATATYPE,
+        "INT2": TokenType.DATATYPE,
+        "INTEGER": TokenType.DATATYPE,
+        "INT": TokenType.DATATYPE,
+        "INT4": TokenType.DATATYPE,
+        "LONG": TokenType.DATATYPE,
+        "BIGINT": TokenType.DATATYPE,
+        "INT8": TokenType.DATATYPE,
+        "DECIMAL": TokenType.DATATYPE,
+        "MAP": TokenType.DATATYPE,
+        "NUMBER": TokenType.DATATYPE,
+        "NUMERIC": TokenType.DATATYPE,
+        "FIXED": TokenType.DATATYPE,
+        "REAL": TokenType.DATATYPE,
+        "FLOAT": TokenType.DATATYPE,
+        "FLOAT4": TokenType.DATATYPE,
+        "FLOAT8": TokenType.DATATYPE,
+        "DOUBLE": TokenType.DATATYPE,
+        "JSON": TokenType.DATATYPE,
+        "CHAR": TokenType.DATATYPE,
+        "VARCHAR": TokenType.DATATYPE,
+        "STRING": TokenType.DATATYPE,
+        "TEXT": TokenType.DATATYPE,
+        "BINARY": TokenType.DATATYPE,
+        "BYTEA": TokenType.DATATYPE,
+        "TIMESTAMP": TokenType.DATATYPE,
+        "TIMESTAMPTZ": TokenType.DATATYPE,
+        "DATE": TokenType.DATATYPE,
+        "UUID": TokenType.DATATYPE,
     }
 
     _WHITE_SPACE = {
