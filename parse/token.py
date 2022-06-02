@@ -16,15 +16,14 @@ class TokenType(EnumBase):
     LITERAL = auto()
     FUNCTION = auto()
     WHITESPACE = auto()
+    SYNONYM = auto()
+    PARAMETER = auto()
+
 
 class Token:
     def __init__(self, label: str = '', ttype: TokenType = TokenType.UNKNOWN):
         self._type = ttype
-        self._children = []
         self._label = label
-
-    def has_sub_statement(self):
-        return len(self._children) > 0
 
     def get_type(self) -> TokenType:
         return self._type
@@ -35,16 +34,15 @@ class Token:
     def get_label(self) -> str:
         return self._label
 
-    def get_children(self) -> list:
-        return self._children
-
-    def add_child(self, token) -> None:
-        self._children.append(token)
-
-
     token_type = property(get_type, set_type)
     label = property(get_label, None)
-    children = property(get_children, None)
+
+    def __repr__(self):
+        return "TOKEN(): | LABEL: [{}], TYPE: {} |".format(self._label, self._type)
+
+    def __str__(self):
+        return "LABEL: [{}], TYPE: {}".format(self._label, self._type)
+
 
 class Tokenizer:
     def __init__(self, statement):
@@ -253,6 +251,18 @@ class Tokenizer:
         self._white_space_pass()
         self._operator_pass()
         self._condense_operators_pass()
+        self._ttype_classification_pass()
+
+    def _ttype_classification_pass(self):
+        working = []
+        for token in self._tokens:
+            if token in self._OPERATORS:
+                working.append(Token(label=token, ttype=self._OPERATORS[token]))
+            elif token in self._KEYWORDS:
+                working.append(Token(label=token, ttype=self._KEYWORDS[token]))
+            else:
+                working.append(Token(label=token, ttype=TokenType.UNKNOWN))
+        self._tokens = working
 
     def _condense_operators_pass(self):
         # scan token set and condense multi character operators when found
