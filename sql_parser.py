@@ -1,4 +1,4 @@
-from parse.token import Tokenizer
+from parse.tokenizer import Tokenizer
 
 sql = """SELECT AbsenceAgreementDEO.ABSENCE_AGREEMENT_ID, AbsenceAgreementDEO.ENTERPRISE_ID, AbsenceAgreementDEO.LEGISLATION_CODE, 
 AbsenceAgreementDEO.EFFECTIVE_START_DATE, AbsenceAgreementDEO.EFFECTIVE_END_DATE, AbsenceAgreementDEO.ANC_ABSENCE_AGREEMENTS_F_ALTCD, 
@@ -48,6 +48,6 @@ AbsenceAgreementDEO.EFFECTIVE_END_DATE = AbsenceAgreementTranslationDEO.EFFECTIV
 sql2 = 'select a.field1 b.field2 from tablea a, tableb b where a.cat> 1 and b.type!=5'
 
 t = Tokenizer(sql)
-print(t.analyze())
+print(t.parse())
 
 

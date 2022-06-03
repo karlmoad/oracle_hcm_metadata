@@ -1,78 +1,5 @@
-from parse.common import EnumBase
-from enum import auto
-
-
-class TokenType(EnumBase):
-    UNKNOWN = auto()
-    DATATYPE = auto()
-    KEYWORD = auto()
-    OBJECT = auto()
-    OPERATOR = auto()
-    WILDCARD = auto()
-    COMMENT = auto()
-    COMMAND = auto()
-    VALUE = auto()
-    NAME = auto()
-    SEPARATOR = auto()
-    GROUPING = auto()
-    LITERAL = auto()
-    FUNCTION = auto()
-    WHITESPACE = auto()
-    SYNONYM = auto()
-    PARAMETER = auto()
-    SELECT = auto()
-    FROM = auto()
-    WHERE = auto()
-    GROUP_BY = auto()
-    ORDER_BY = auto()
-    HAVING = auto()
-    JOIN = auto()
-    CONSTRAINT = auto()
-    INSERT = auto()
-    UPDATE = auto()
-    DELETE = auto()
-    AS = auto()
-
-class Token:
-    def __init__(self, label: str = '', ttype: TokenType = TokenType.UNKNOWN):
-        self._type = ttype
-        self._label = label
-        self._subitems = []
-
-    def get_type(self) -> TokenType:
-        return self._type
-
-    def set_type(self, value: TokenType):
-        self._type = value
-
-    def get_label(self) -> str:
-        return self._label
-
-    def add_sub_item(self, token):
-        self._subitems.append(token)
-
-    def get_sub_items(self):
-        return self._subitems
-
-    token_type = property(get_type, set_type)
-    label = property(get_label, None)
-    sub_items = property(get_sub_items,None)
-
-    def __repr__(self):
-        return self._to_string()
-
-    def __str__(self):
-        return self._to_string()
-
-    def _to_string(self):
-        base = "( LABEL: [{}], TYPE: {} ".format(self._label, self._type)
-        if len(self._subitems) > 0:
-            base = base + " SUB ITEMS: ("
-            for item in self._subitems:
-                base = base + "\n\t" + item._to_string() + ","
-            base = base + "\n)"
-        base = base + ")"
-        return base
+from parse.common import TokenType, Token
+from parse.syntax import SyntaxAnalysis
 
 class Tokenizer:
     def __init__(self, statement):
@@ -85,7 +12,7 @@ class Tokenizer:
     tokens = property(get_tokens, None)
 
     _OPERATORS = {
-        ",": TokenType.SEPARATOR,
+        ",": TokenType.COMMA,
         "'": TokenType.LITERAL,
         "(": TokenType.GROUPING,
         ")": TokenType.GROUPING,
@@ -96,7 +23,7 @@ class Tokenizer:
         "&": TokenType.OPERATOR,
         "^": TokenType.OPERATOR,
         ":": TokenType.OPERATOR,
-        ".": TokenType.SEPARATOR,
+        ".": TokenType.PERIOD,
         "-": TokenType.OPERATOR,
         "=": TokenType.OPERATOR,
         ">": TokenType.OPERATOR,
@@ -286,13 +213,14 @@ class Tokenizer:
         TokenType.HAVING
     }
 
-    def analyze(self):
+    def parse(self):
         self._white_space_pass()
         self._operator_pass()
         self._condense_operators_pass()
         self._ttype_classification_pass()
-        #self._syntax_alignment_pass()
 
+        analyzer = SyntaxAnalysis(self.tokens)
+        self._tokens = analyzer.analyze()
         return self._tokens
 
     def _syntax_alignment_pass(self):
