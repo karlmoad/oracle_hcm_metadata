@@ -1,6 +1,7 @@
 import json
 import re
-from mo_sql_parsing import parse
+from parse.tokenizer import Tokenizer
+from parse.common import Token, TokenType
 
 schema = {}
 
@@ -25,32 +26,57 @@ def extract_schema_structure(obj):
                     schema[obj['name'].upper()][c['name'].upper()] = re.compile(c['name'].upper(), re.IGNORECASE)
 
 
-def tokenizer(statement):
-    tokens = []
-    statement = statement.upper()
-    buffer = ''
-    pos = 0
-    while True:
-        if pos+1 > len(statement) -1:
-            break
+def find_tables(tokens, names):
+    rez = {'tables': {}}
+    in_from_clause = False
+    for i, token in enumerate(tokens):
+        if token.token_type == TokenType.FROM:
+            in_from_clause = True
+            continue
+        if in_from_clause and \
+                token.token_type in [TokenType.SELECT, TokenType.WHERE, TokenType.GROUP_BY, TokenType.ORDER_BY]:
+            in_from_clause = False
+            continue
+        if in_from_clause and token.token_type == TokenType.UNKNOWN:
+            if token.label in names:
+                # establish table to alias idx entry
+                if token.label not in rez['tables']:
+                    rez['tables'][token.label] = []
 
-        tmp = statement[pos: pos+1]
-        if tmp in [' ', ',']:
-            tokens.append(buffer)
-            buffer = ''
-        else:
-            buffer = buffer + tmp
+                # identify is alias is present
+                if i+1 < len(tokens) and tokens[i+1].token_type is TokenType.UNKNOWN:
+                    lbl = tokens[i + 1].label
+                    if lbl not in rez['tables'][token.label]:
+                        rez['tables'][token.label].append(lbl)
+    return rez
 
-        pos = pos + 1
-
-    return tokens
 
 def process_view(obj):
-    if 'query' in obj:
-        obj['statement'] = ' '.join(obj['query'])
-        obj['parts'] = find_sql_objects_pass1(obj['statement'])
-        views.append(obj)
+    view = {}
+    if 'name' in obj and 'schema' in obj and 'query' in obj:
+        view['key'] = "{}.{}".format(obj['schema'], obj['name']).upper()
+        view['title'] = obj['name'].upper()
+        view['description'] = obj['description']
+        view["table_type"] = "VIEW"
 
+        if 'section' in obj:
+            view['table_comment'] = "Scope: {}".format(obj['section'], obj['owner'])
+        if 'owner' in obj:
+            tmp = ''
+            if 'table_comment' in view:
+                tmp = "{},".format(view['table_comment'])
+            view['table_comment'] = "{}Owner: {}".format(tmp, obj['owner'])
+
+        sql = ''
+        for s in obj["query"]:
+            sql += s + "\n"
+
+        t = Tokenizer(sql.upper())
+        t.parse()
+        t_refs = find_tables(t.tokens, schema.keys())
+        view['view_sql'] = sql.upper()
+        view["table_refs"] = t_refs
+        views.append(view)
 
 def process_table(obj):
     table = {}
@@ -110,7 +136,7 @@ for obj in data['objects']:
 
 #temp
 with open('{}/views.json'.format(root_dir), 'w') as fo:
-    fo.write(json.dumps(views))
+    fo.write(json.dumps(views[0:100]))
 #END temp
 
 print("----END OF LINE----")
